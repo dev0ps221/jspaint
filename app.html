@@ -6,35 +6,56 @@
 </head>
 <body>
     <canvas id='app'>
-
     </canvas>
     <section class='horizon' id='horizon'>
-
     </section>
     <section class='meridien' id='meridien'>
-
+    </section>
+    <section id='grid'>
     </section>
     <section id='options_app'>
-        <img class="option_app selected" id='line' src='icos/line.png'/>
-        <img class="option_app" id='pencil' src='icos/crayon.png'/>
-        <img class="option_app" id='fill' src='icos/fill.jpeg'/>
-        <img class="option_app" id='square' src='icos/square.png'/>
-        <img class="option_app" id='dotted' src='icos/dotted.png'/>
-        <img class="option_app" id='eraser' src='icos/eraser.jpeg'/>
+        <span class='bloc_option_app selected'>
+            <img class="option_app" id='line' src='icos/line.png'/>
+        </span>
+        <span class='bloc_option_app'>
+            <img class="option_app" id='pencil' src='icos/crayon.png'/>
+        </span>
+        <span class='bloc_option_app'>
+            <img class="option_app" id='fill' src='icos/fill.jpeg'/>
+        </span>
+        <span class='bloc_option_app'>
+            <img class="option_app" id='square' src='icos/square.png'/>
+        </span>
+        <span class='bloc_option_app'>
+            <img class="option_app" id='dotted' src='icos/dotted.png'/>
+        </span>
+        <span class='bloc_option_app'>
+            <img class="option_app" id='eraser' src='icos/eraser.jpeg'/>
+        </span>
+    </section>
+    <section id='options_view'>
+        <img class="option_view selected" id='grid' src='icos/grid.png'/>
+        <img class="option_view" id='undo' src='icos/undo.png'/>
+        <img class="option_view" id='redo' src='icos/redo.png'/>
     </section>
     <script>
+
+
+
+
         let tool = ""
         let canvas = document.querySelector("#app")
         let options_app = document.querySelectorAll(".option_app")
+        let grid = document.querySelector("#grid")
         let event = false
-        canvas.width = window.innerWidth
-        canvas.height = window.innerHeight
+        canvas.width = grid.offsetWidth = window.innerWidth
+        canvas.height = grid.offsetHeight = window.innerHeight
         let c = canvas.getContext("2d")
         let lastPos = false
         let drawStartPos = 0
         let lines = []
+        let pencils = []
         let trackers = []
-
         const processDraw = (e) => {
             if(event === "drawing"){
                 drawStartPos = {
@@ -42,16 +63,12 @@
                     y:e.clientY
                 }
             }
-
         }
-
         document.addEventListener(
             'mousemove',
             (e)=>{
                 if(lastPos){
-
                     c.clearRect(0,0,window.innerWidth,window.innerHeight)
-
                 }
                 lastPos = {
                     x:e.clientX,
@@ -62,7 +79,6 @@
                         tracker.parentNode.removeChild(tracker)
                     }
                 )
-
                 let horizontal = document.createElement('section'),
                 vertical = document.createElement('section')
                 horizontal.className ='horizon tracker'
@@ -79,31 +95,52 @@
                 vertical.style.transform = "rotateZ(180deg)"
                 vertical.style.height = "100%"
                 vertical.style.background = "red"
-                // vertical.style.position = "absolute"
-                
-                
                 document.querySelector("body").appendChild(horizontal)
                 document.querySelector("body").appendChild(vertical)
-                // alert('yo')
+                
                 if(event=='drawing'){
-
                     c.beginPath()
-                    c.moveTo(drawStartPos.x,drawStartPos.y)
-                    c.lineTo(lastPos.x,lastPos.y)
-                    c.fillStyle = 'black'
-                    c.fill()
-                    c.stroke()
+                    switch(tool){
+                        case 'line':
+                            c.moveTo(drawStartPos.x,drawStartPos.y)
+                            c.lineTo(lastPos.x,lastPos.y)
+                            c.fillStyle = 'black'
+                            c.fill()
+                            c.stroke()
+                            break
+                        case 'pencil':
+                            pencils.push({x:e.clientX,y:e.clientY})
+                            break
+                    }
                     c.closePath()
                 }
                 lines.forEach(
                     line=>{
                         c.beginPath()
                         c.moveTo(line[0].x,line[0].y)
-                        c.lineTo(line[1].x,line[1].y,50)
+                        c.lineTo(line[1].x,line[1].y)
                         c.stroke()
                         c.closePath()
                     }
                 )
+                let p = 0
+                if(event=='drawing'){
+                    pencils.forEach(
+                        pencil=>{
+
+                            c.beginPath()
+                            c.moveTo(p!==0?pencils[p-1].x:pencil.x,p!==0?pencils[p-1].y:pencil.y)
+                            c.lineTo(pencil.x,pencil.y)
+                            c.fillStyle = "black"
+                            c.fill()
+                            c.stroke()
+                            c.closePath()
+                            p++
+                        }
+                    )
+
+                }
+                delete(p)
                 c.beginPath()
                 c.moveTo(e.clientX,e.clientY)
                 c.arc(e.clientX,e.clientY,5,0,Math.PI*2,true)
@@ -126,13 +163,34 @@
                     y:e.clientY
                 }
                 c.beginPath()
-                c.moveTo(drawStartPos.x,drawStartPos.y)
-                c.lineTo(drawEndPos.x,drawEndPos.y)
-                c.fillStyle = 'black'
-                c.fill()
-                c.stroke()
+
+                switch(tool){
+                    case 'line':
+                        c.moveTo(drawStartPos.x,drawStartPos.y)
+                        c.lineTo(drawEndPos.x,drawEndPos.y)
+                        c.fillStyle = 'black'
+                        c.fill()
+                        c.stroke()
+                        lines.push([drawStartPos,drawEndPos])
+                        break
+                    case 'pencil':
+
+                        pencils.forEach(
+                            pencil=>{
+
+                                c.beginPath()
+                                c.moveTo(p!==0?pencils[p-1].x:pencil.x,p!==0?pencils[p-1].y:pencil.y)
+                                c.lineTo(pencil.x,pencil.y)
+                                c.fillStyle = "black"
+                                c.fill()
+                                c.stroke()
+                                c.closePath()
+                                p++
+                            }
+                        )
+                        break
+                }
                 c.closePath()
-                lines.push([drawStartPos,drawEndPos])
                 event = false
                 drawStartPos=drawEndPos=0
             },
@@ -145,7 +203,7 @@
                     option=>{
                         if(option.className.match("selected")!==null){
                             tool = option.id
-
+                            
                         }
                     }
                 )
@@ -153,15 +211,22 @@
             },
             false
         )
-        (options_app)(
+        options_app.forEach(
             option=>{
-                option.addEventListener(
+                // alert(option)
+                option.parentNode.addEventListener(
                     'click',
                     (e)=>{
-                        if(e.target.className.match("selected") !== false){
-                            tool = e.target.id
-                            alert(tool)
-                        }
+                        options_app.forEach(
+                            option=>{
+                                if(option.parentNode.className.match("selected")!==null){
+                                    option.parentNode.className = "bloc_option_app"
+
+                                }
+                            }
+                        )
+                        tool = e.currentTarget.id
+                        e.currentTarget.className = "bloc_option_app selected"
                     }
                 )
             }
@@ -170,6 +235,7 @@
     <style>
         body{
             overflow:hidden;
+            user-select: none;
         }
         canvas{
             z-index:10;
@@ -177,33 +243,78 @@
             left: 0;
             top: 0;
         }
-
         #options_app{
             position: absolute;
             bottom: 0;
             left: 0;
-            z-index: 20;
+            z-index: 10;
             width: 100%;
-            background: rgba(221,152,38,0.8);
+            background: black;
         }
-        .option_app{
-            border-radius: 50%;
+        .bloc_option_app{
+            display: inline-table;
             width: 5%;
             height: 80px;
+            text-align: center;
+            border-radius: 50%;
+            background: white;
             cursor: pointer;
         }
-        .option_app:hover{
+        
+        .option_app{
+
+            /* width: 100%;
+            height: 100%;  */
+            width: 50%;
+            height: 50%;
+            /* padding: 10%; */
+            
+            margin: 20%;
+        }
+        .bloc_option_app:hover{
             box-shadow: 5px 5px 5px rgba(255,255,255,0.6);
             background: rgba(255,255,255,0.3);
         }
-        .option_app:active{
+        .bloc_option_app:active{
             border: 1px solid greenyellow;
             background: rgba(255,255,255,0.3);
         }
-        [class='option_app selected']{
+        [class='bloc_option_app selected']{
             box-shadow: 5px 5px 5px greenyellow;
-            /* border: 1px solid green; */
             background: rgba(255,255,255,0.3);
+        }
+        #options_view{
+            padding: 1%;
+            background: black;
+            position: absolute;
+            right:0%;
+            z-index: 10;
+            width:5%;
+            top:10%;
+            text-align: center;
+            opacity: 0.1;
+            transition: 0.4s;
+        }
+        #options_view:hover{
+            opacity: 1;
+        }
+        #options_view .option_view{
+            display: block;
+            width: 80%;
+            height: 30px;
+            margin-left: 10%;
+            margin-right: 10%;
+            cursor: pointer;
+            margin-bottom: 50px;
+            background: white;
+        }
+        #options_view .option_view:hover{
+            border-radius: 50%;
+            width: 70%;
+            height: 20px;
+            padding: 5px;
+            border: 1px solid greenyellow;
+            background: #bbd3c7;
         }
         .horizon,.meridien{
             position:absolute;
@@ -222,6 +333,13 @@
         }
         #meridien{
             top:0;
+        }
+        #grid{
+            display: none;
+            /* position: absolute;
+            top:0;
+            left: 0; */
+            /* z-index: 2; */
         }
     </style>
 </body>
